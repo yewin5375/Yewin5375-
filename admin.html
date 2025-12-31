@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html lang="my">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MT ROAST - Admin Command Center</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap');
+        body { font-family: 'Inter', sans-serif; background: #f8fafc; }
+        .page { display: none; transition: all 0.3s ease; }
+        .page.active { display: block; animation: fadeIn 0.4s ease; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        .nav-card { background: white; border-radius: 1.5rem; padding: 1.25rem; display: flex; align-items: center; justify-content: space-between; border: 1px solid #f1f5f9; cursor: pointer; }
+        .nav-card:active { background: #f1f5f9; transform: scale(0.98); }
+    </style>
+</head>
+<body class="pb-10">
+
+    <header class="p-6 flex justify-between items-center bg-white border-b sticky top-0 z-50">
+        <h1 id="page-title" class="text-xl font-bold text-slate-800">Admin Panel</h1>
+        <button id="back-btn" onclick="goTo('home')" class="hidden w-10 h-10 bg-slate-100 rounded-full flex items-center justify-center">
+            <i class="fas fa-chevron-left"></i>
+        </button>
+    </header>
+
+    <div id="home" class="page active p-6 space-y-4">
+        <div class="grid grid-cols-2 gap-4 mb-6">
+            <div class="bg-orange-500 p-4 rounded-[2rem] text-white">
+                <p class="text-xs opacity-80">Today's Orders</p>
+                <h3 id="order-count" class="text-2xl font-black">0</h3>
+            </div>
+            <div class="bg-slate-800 p-4 rounded-[2rem] text-white">
+                <p class="text-xs opacity-80">Income</p>
+                <h3 id="total-income" class="text-xl font-black">0 K</h3>
+            </div>
+        </div>
+
+        <h4 class="text-xs font-bold text-slate-400 uppercase tracking-widest mt-8 mb-2">Management</h4>
+        
+        <div onclick="goTo('orders-page')" class="nav-card">
+            <div class="flex items-center gap-4">
+                <div class="w-12 h-12 bg-blue-100 text-blue-600 rounded-2xl flex items-center justify-center text-lg"><i class="fas fa-shopping-cart"></i></div>
+                <div class="font-bold">အော်ဒါများ စီမံမည်</div>
+            </div>
+            <i class="fas fa-chevron-right text-slate-300"></i>
+        </div>
+
+        <div onclick="goTo('menu-page')" class="nav-card">
+            <div class="flex items-center gap-4">
+                <div class="w-12 h-12 bg-emerald-100 text-emerald-600 rounded-2xl flex items-center justify-center text-lg"><i class="fas fa-plus-circle"></i></div>
+                <div class="font-bold">Menu အသစ်ထည့်မည်</div>
+            </div>
+            <i class="fas fa-chevron-right text-slate-300"></i>
+        </div>
+
+        <div onclick="goTo('settings-page')" class="nav-card">
+            <div class="flex items-center gap-4">
+                <div class="w-12 h-12 bg-slate-100 text-slate-600 rounded-2xl flex items-center justify-center text-lg"><i class="fas fa-cog"></i></div>
+                <div class="font-bold">Settings & Shop Status</div>
+            </div>
+            <i class="fas fa-chevron-right text-slate-300"></i>
+        </div>
+    </div>
+
+    <div id="orders-page" class="page p-6 space-y-4">
+        <div id="orders-list" class="space-y-4">
+            </div>
+    </div>
+
+    <div id="menu-page" class="page p-6">
+        <div class="bg-white p-6 rounded-[2rem] border space-y-4 shadow-sm">
+            <h3 class="font-bold text-lg">Add New Menu</h3>
+            
+            <div class="space-y-4">
+                <div onclick="document.getElementById('file-input').click()" class="w-full h-40 bg-slate-50 border-2 border-dashed rounded-2xl flex flex-col items-center justify-center text-slate-400 overflow-hidden relative">
+                    <img id="preview-img" class="absolute inset-0 w-full h-full object-cover hidden">
+                    <i class="fas fa-image text-2xl mb-2"></i>
+                    <span class="text-xs">ဖုန်းထဲမှ ပုံရွေးပါ</span>
+                    <input type="file" id="file-input" class="hidden" accept="image/*" onchange="previewFile()">
+                </div>
+
+                <input type="text" id="menu-name" placeholder="ဟင်းပွဲအမည်" class="w-full p-4 bg-slate-100 rounded-xl border-none outline-none focus:ring-2 focus:ring-orange-500">
+                <input type="number" id="menu-price" placeholder="ဈေးနှုန်း (K)" class="w-full p-4 bg-slate-100 rounded-xl border-none outline-none focus:ring-2 focus:ring-orange-500">
+                
+                <select id="menu-cat" class="w-full p-4 bg-slate-100 rounded-xl border-none outline-none">
+                    <option value="အသား">အသား</option>
+                    <option value="အရိုး">အရိုး</option>
+                    <option value="အသီးအရွက်">အသီးအရွက်</option>
+                </select>
+
+                <button id="save-menu-btn" onclick="saveMenu()" class="w-full py-4 bg-orange-600 text-white rounded-xl font-bold shadow-lg">သိမ်းမည်</button>
+            </div>
+        </div>
+    </div>
+
+    <audio id="notif-sound" src="https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3"></audio>
+
+    <script>
+        const _supabase = supabase.createClient("https://iogpnvljnhsxuzzdltpb.supabase.co", "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlvZ3BudmxqbmhzeHV6emRsdHBiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjY3NTk2MDYsImV4cCI6MjA4MjMzNTYwNn0.Kxy3QW1gq-J-tzUF2fxQd0l989Wr7BI2uRTbWDTNL6k");
+
+        // --- NAVIGATION ---
+        function goTo(pageId) {
+            document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+            document.getElementById(pageId).classList.add('active');
+            
+            const titles = { 'home': 'Admin Dashboard', 'orders-page': 'အော်ဒါစာရင်း', 'menu-page': 'Add Menu', 'settings-page': 'Settings' };
+            document.getElementById('page-title').innerText = titles[pageId];
+            document.getElementById('back-btn').classList.toggle('hidden', pageId === 'home');
+
+            if(pageId === 'orders-page') fetchOrders();
+        }
+
+        // --- IMAGE PREVIEW ---
+        function previewFile() {
+            const file = document.getElementById('file-input').files[0];
+            const preview = document.getElementById('preview-img');
+            const reader = new FileReader();
+            reader.onloadend = () => { preview.src = reader.result; preview.classList.remove('hidden'); }
+            if(file) reader.readAsDataURL(file);
+        }
+
+        // --- SAVE NEW MENU ---
+        async function saveMenu() {
+            const file = document.getElementById('file-input').files[0];
+            const name = document.getElementById('menu-name').value;
+            const price = document.getElementById('menu-price').value;
+            const cat = document.getElementById('menu-cat').value;
+            const btn = document.getElementById('save-menu-btn');
+
+            if(!file || !name || !price) return alert("အကုန်ဖြည့်ပါ");
+
+            btn.disabled = true; btn.innerText = "Saving...";
+
+            try {
+                // 1. Upload Image to Supabase Storage
+                const fileName = Date.now() + "_" + file.name;
+                const { data: uploadData, error: uploadError } = await _supabase.storage
+                    .from('menu-images')
+                    .upload(fileName, file);
+                
+                if(uploadError) throw uploadError;
+
+                const imgUrl = _supabase.storage.from('menu-images').getPublicUrl(fileName).data.publicUrl;
+
+                // 2. Save to Database
+                const { error: dbError } = await _supabase.from('menu').insert([{
+                    name, price: parseInt(price), category: cat, image_url: imgUrl, is_available: true
+                }]);
+
+                if(dbError) throw dbError;
+
+                alert("Menu အသစ် ထည့်သွင်းပြီးပါပြီ!");
+                goTo('home');
+            } catch (err) {
+                alert(err.message);
+            } finally {
+                btn.disabled = false; btn.innerText = "သိမ်းမည်";
+            }
+        }
+
+        // --- FETCH & MANAGE ORDERS ---
+        async function fetchOrders() {
+            const { data, error } = await _supabase.from('orders').select('*').order('created_at', { ascending: false });
+            if(error) return;
+
+            document.getElementById('orders-list').innerHTML = data.map(o => `
+                <div class="bg-white p-5 rounded-[2rem] shadow-sm border space-y-3">
+                    <div class="flex justify-between items-start">
+                        <div>
+                            <p class="text-xs text-slate-400 font-bold uppercase">${new Date(o.created_at).toLocaleTimeString()}</p>
+                            <h4 class="font-bold text-lg">${o.customer_name}</h4>
+                            <p class="text-sm text-blue-600 font-medium">${o.customer_phone}</p>
+                        </div>
+                        <span class="px-3 py-1 bg-orange-100 text-orange-600 rounded-full text-[10px] font-bold">${o.status}</span>
+                    </div>
+                    <div class="py-2 border-y border-dashed text-sm text-slate-600">
+                        ${o.items.map(i => `• ${i.name} (${i.qty} ခု)`).join('<br>')}
+                    </div>
+                    <div class="flex justify-between items-center pt-2">
+                        <span class="font-black text-slate-800">${o.total_amount}</span>
+                        <select onchange="updateStatus(${o.id}, this.value)" class="bg-slate-100 p-2 rounded-xl text-xs font-bold border-none outline-none">
+                            <option ${o.status === 'Pending' ? 'selected' : ''}>Pending</option>
+                            <option ${o.status === 'Cooking' ? 'selected' : ''}>Cooking</option>
+                            <option ${o.status === 'Delivered' ? 'selected' : ''}>Delivered</option>
+                        </select>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        async function updateStatus(id, status) {
+            await _supabase.from('orders').update({ status }).eq('id', id);
+        }
+
+        // --- REAL-TIME LISTENER (For Notification Sound) ---
+        _supabase.channel('orders').on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'orders' }, payload => {
+            document.getElementById('notif-sound').play();
+            alert("🔔 အော်ဒါအသစ် ရောက်လာပါပြီ!");
+            fetchOrders();
+            updateDashboard();
+        }).subscribe();
+
+        async function updateDashboard() {
+            const { data } = await _supabase.from('orders').select('total_amount');
+            document.getElementById('order-count').innerText = data.length;
+            const total = data.reduce((sum, o) => sum + parseInt(o.total_amount.replace(/\D/g,'')), 0);
+            document.getElementById('total-income').innerText = total.toLocaleString() + " K";
+        }
+
+        updateDashboard();
+    </script>
+</body>
+</html>
